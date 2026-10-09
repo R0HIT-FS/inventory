@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,4 +5,78 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum StockMovementType {
+  RECEIPT
+  ISSUE
+  ADJUSTMENT
+}
+
+model Category {
+  id          BigInt    @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("categories")
+}
+
+model Supplier {
+  id          BigInt            @id @default(autoincrement())
+  name        String            @unique
+  contactName String?           @map("contact_name")
+  email       String?
+  phone       String?
+  products    ProductSupplier[]
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("suppliers")
+}
+
+model Product {
+  id             BigInt            @id @default(autoincrement())
+  name           String
+  sku            String            @unique
+  description    String?
+  unitPrice      Decimal           @map("unit_price") @db.Decimal(12, 2)
+  quantityOnHand Int               @default(0) @map("quantity_on_hand")
+  reorderLevel   Int               @default(5) @map("reorder_level")
+  categoryId     BigInt            @map("category_id")
+  category       Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  suppliers      ProductSupplier[]
+  movements      StockMovement[]
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+model ProductSupplier {
+  productId  BigInt   @map("product_id")
+  supplierId BigInt   @map("supplier_id")
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([productId, supplierId])
+  @@index([supplierId])
+  @@map("product_suppliers")
+}
+
+model StockMovement {
+  id             BigInt            @id @default(autoincrement())
+  productId      BigInt            @map("product_id")
+  product        Product           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  type           StockMovementType
+  quantityChange Int               @map("quantity_change")
+  reason         String?
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([productId, createdAt])
+  @@map("stock_movements")
 }
