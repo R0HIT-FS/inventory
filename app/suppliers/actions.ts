@@ -97,3 +97,30 @@ export async function updateSupplier(formData: FormData) {
     revalidatePath("/suppliers");
     redirect("/suppliers?updated=1");
   }
+
+
+  export async function deleteSupplier(formData: FormData) {
+    const rawId = formData.get("id");
+  
+    if (typeof rawId !== "string" || !/^\d+$/.test(rawId)) {
+      redirect("/suppliers?error=invalid");
+    }
+  
+    try {
+      await prisma.supplier.delete({
+        where: { id: BigInt(rawId) },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        redirect("/suppliers?error=missing");
+      }
+  
+      throw error;
+    }
+  
+    revalidatePath("/suppliers");
+    redirect("/suppliers?deleted=1");
+  }

@@ -11,6 +11,7 @@ type SuppliersPageProps = {
     error?: string;
     created?: string;
     updated?: string;
+    deleted?: string;
   }>;
 };
 
@@ -19,7 +20,7 @@ export default async function SuppliersPage({
 }: SuppliersPageProps) {
   await connection();
 
-  const { error, created, updated } = await searchParams;
+  const { error, created, updated, deleted } = await searchParams;
   const suppliers = await prisma.supplier.findMany({
     orderBy: { name: "asc" },
   });
@@ -115,6 +116,10 @@ export default async function SuppliersPage({
 
         {updated === "1" && (
           <p className="mt-3 text-sm text-green-700">Supplier updated.</p>
+        )}
+
+        {deleted === "1" && (
+          <p className="mt-3 text-sm text-green-700">Supplier deleted.</p>
         )}
 
         <ul className="mt-8 divide-y divide-slate-200 rounded-md border bg-white">
